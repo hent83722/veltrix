@@ -177,6 +177,26 @@ public final class PluginExporter {
             .append("    public ").append(listenerClassName).append("(JavaPlugin plugin) {\n")
             .append("        this.plugin = plugin;\n")
             .append("    }\n\n")
+            .append("    private double toNumber(Object value) {\n")
+            .append("        if (value instanceof Number n) {\n")
+            .append("            return n.doubleValue();\n")
+            .append("        }\n")
+            .append("        try {\n")
+            .append("            return Double.parseDouble(String.valueOf(value));\n")
+            .append("        } catch (Exception ex) {\n")
+            .append("            return 0.0;\n")
+            .append("        }\n")
+            .append("    }\n\n")
+            .append("    private boolean compareValues(Object a, Object b, String operator) {\n")
+            .append("        return switch (operator) {\n")
+            .append("            case \"!=\" -> !java.util.Objects.equals(a, b);\n")
+            .append("            case \">\" -> toNumber(a) > toNumber(b);\n")
+            .append("            case \">=\" -> toNumber(a) >= toNumber(b);\n")
+            .append("            case \"<\" -> toNumber(a) < toNumber(b);\n")
+            .append("            case \"<=\" -> toNumber(a) <= toNumber(b);\n")
+            .append("            default -> java.util.Objects.equals(a, b);\n")
+            .append("        };\n")
+            .append("    }\n\n")
             .append("    public void bootstrap() {\n");
 
         List<Node> eventNodes = graph.nodes().stream()
@@ -325,6 +345,8 @@ public final class PluginExporter {
             quoteJava(node.valueOrDefault("text", "Hello from CraftGraph")));
         String locationExpr = resolveInputExpression(graph, node, "Location", context,
             context.locationExpr() != null ? context.locationExpr() : "new Location(Bukkit.getWorlds().get(0), 0, 64, 0)");
+        String itemExpr = resolveInputExpression(graph, node, "Item", context,
+            itemStackExpression(node.valueOrDefault("material", "DIAMOND"), node.valueOrDefault("amount", "1")));
         String commandExpr = resolveInputExpression(graph, node, "Command", context,
             quoteJava(node.valueOrDefault("command", "say Executed command from graph")));
         String soundExpr = resolveInputExpression(graph, node, "Sound", context,
@@ -335,7 +357,7 @@ public final class PluginExporter {
         return switch (node.type()) {
             case "action.send_message" -> "if (" + playerExpr + " instanceof Player p) { p.sendMessage(" + textExpr + "); }";
             case "action.spawn_entity" -> "if (" + locationExpr + " != null && (" + locationExpr + ").getWorld() != null) { (" + locationExpr + ").getWorld().spawnEntity(" + locationExpr + ", EntityType.valueOf(" + entityTypeExpr + ")); }";
-            case "action.give_item" -> "if (" + playerExpr + " instanceof Player p) { p.getInventory().addItem(new ItemStack(org.bukkit.Material.DIAMOND, 1)); }";
+            case "action.give_item" -> "if (" + playerExpr + " instanceof Player p) { p.getInventory().addItem(" + itemExpr + "); }";
             case "action.teleport_player" -> "if (" + playerExpr + " instanceof Player p) { p.teleport(" + locationExpr + "); }";
             case "action.play_sound" -> "if (" + playerExpr + " instanceof Player p) { p.playSound(p.getLocation(), Sound.valueOf(" + soundExpr + "), 1.0f, 1.0f); }";
             case "action.run_command" -> "Bukkit.dispatchCommand(Bukkit.getConsoleSender(), " + commandExpr + ");";
@@ -377,10 +399,18 @@ public final class PluginExporter {
             case "data.number" -> normalizeNumber(sourceNode.valueOrDefault("value", "1"));
             case "data.text" -> quoteJava(sourceNode.valueOrDefault("value", "CraftGraph"));
             case "data.player" -> context.playerExpr() != null ? context.playerExpr() : "null";
-            case "data.location" -> context.locationExpr() != null
-                ? context.locationExpr()
-                : "new Location(Bukkit.getWorlds().get(0), 0, 64, 0)";
-            case "data.itemstack" -> "new ItemStack(org.bukkit.Material.DIAMOND, 1)";
+            case "data.location" -> {
+                String world = sourceNode.valueOrDefault("world", "world");
+                String x = normalizeNumber(sourceNode.valueOrDefault("x", "0"));
+                String y = normalizeNumber(sourceNode.valueOrDefault("y", "64"));
+                String z = normalizeNumber(sourceNode.valueOrDefault("z", "0"));
+                String configured = "(Bukkit.getWorld(" + quoteJava(world) + ") != null ? new Location(Bukkit.getWorld(" + quoteJava(world) + "), " + x + ", " + y + ", " + z + ") : new Location(Bukkit.getWorlds().get(0), " + x + ", " + y + ", " + z + "))";
+                yield configured;
+            }
+            case "data.itemstack" -> itemStackExpression(
+                sourceNode.valueOrDefault("material", "DIAMOND"),
+                sourceNode.valueOrDefault("amount", "1")
+            );
             case "event.player_chat" -> sourceOutputName.equalsIgnoreCase("Message") && context.messageExpr() != null
                 ? context.messageExpr()
                 : (sourceOutputName.equalsIgnoreCase("Player") ? context.playerExpr() : fallback);
@@ -391,7 +421,8 @@ public final class PluginExporter {
             case "logic.compare_values" -> {
                 String a = resolveInputExpression(graph, sourceNode, "A", context, "null");
                 String b = resolveInputExpression(graph, sourceNode, "B", context, "null");
-                yield "java.util.Objects.equals(" + a + ", " + b + ")";
+                String operator = normalizeOperator(sourceNode.valueOrDefault("operator", "=="));
+                yield "compareValues(" + a + ", " + b + ", " + quoteJava(operator) + ")";
             }
             case "logic.boolean_and" -> {
                 String a = resolveInputExpression(graph, sourceNode, "A", context, "false");
@@ -410,10 +441,15 @@ public final class PluginExporter {
             case "logic.random_chance" -> {
                 String chance = resolveInputExpression(graph, sourceNode, "Chance", context,
                     normalizeNumber(sourceNode.valueOrDefault("chance", "0.5")));
-                yield "(Math.random() < " + chance + ")";
+                yield "(Math.random() < Math.max(0.0, Math.min(1.0, " + chance + ")))";
             }
             default -> fallback;
         };
+    }
+
+    private String itemStackExpression(String material, String amount) {
+        return "new ItemStack(org.bukkit.Material.valueOf(" + quoteJava(normalizeEnumName(material, "DIAMOND")) + "), "
+            + normalizeInteger(amount, "1") + ")";
     }
 
     private String quoteJava(String value) {
@@ -434,6 +470,40 @@ public final class PluginExporter {
         } catch (NumberFormatException ex) {
             return "0";
         }
+    }
+
+    private String normalizeInteger(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return String.valueOf(Math.max(1, parsed));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private String normalizeEnumName(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        String normalized = value.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        normalized = normalized.replaceAll("[^A-Z0-9_]", "");
+        if (normalized.isBlank()) {
+            return fallback;
+        }
+        return normalized;
+    }
+
+    private String normalizeOperator(String value) {
+        if (value == null || value.isBlank()) {
+            return "==";
+        }
+        return switch (value.trim()) {
+            case "==", "!=", ">", ">=", "<", "<=" -> value.trim();
+            default -> "==";
+        };
     }
 
     private List<Node> nextExecutionNodes(GraphManager graph, Node sourceNode, String outputPortName) {

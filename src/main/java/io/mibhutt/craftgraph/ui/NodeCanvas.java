@@ -15,6 +15,7 @@ import javafx.scene.Group;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -193,7 +194,9 @@ public final class NodeCanvas extends StackPane {
         });
 
         addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
-            requestFocus();
+            if (!isEditableTarget(e)) {
+                requestFocus();
+            }
             boolean overNode = isPointerOverNode(e);
             if (!overNode && (e.getTarget() == this || e.getTarget() == gridCanvas || e.getTarget() == overlayLayer)) {
                 if (e.getButton() == MouseButton.MIDDLE || e.getButton() == MouseButton.SECONDARY) {
@@ -246,7 +249,7 @@ public final class NodeCanvas extends StackPane {
             if (Math.abs(e.getDeltaY()) < 0.01) {
                 return;
             }
-            double factor = Math.exp(-e.getDeltaY() * 0.0015);
+            double factor = Math.exp(e.getDeltaY() * 0.0015);
             Point2D local = sceneToLocal(e.getSceneX(), e.getSceneY());
             zoomAt(local.getX(), local.getY(), factor);
             e.consume();
@@ -487,6 +490,17 @@ public final class NodeCanvas extends StackPane {
         javafx.scene.Node current = e.getPickResult() != null ? e.getPickResult().getIntersectedNode() : null;
         while (current != null) {
             if (current instanceof NodeView) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
+    }
+
+    private boolean isEditableTarget(MouseEvent e) {
+        javafx.scene.Node current = e.getPickResult() != null ? e.getPickResult().getIntersectedNode() : null;
+        while (current != null) {
+            if (current instanceof TextInputControl) {
                 return true;
             }
             current = current.getParent();

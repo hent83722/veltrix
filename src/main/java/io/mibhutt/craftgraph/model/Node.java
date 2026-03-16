@@ -44,14 +44,29 @@ public final class Node {
 
     private void initializeDefaults() {
         switch (type) {
-            case "data.text" -> values.put("value", "Hello from CraftGraph");
+            case "data.text" -> values.put("value", "");
             case "data.number" -> values.put("value", "1");
+            case "data.location" -> {
+                values.put("world", "world");
+                values.put("x", "0");
+                values.put("y", "64");
+                values.put("z", "0");
+            }
+            case "data.itemstack" -> {
+                values.put("material", "DIAMOND");
+                values.put("amount", "1");
+            }
             case "logic.delay_timer" -> values.put("ticks", "20");
             case "logic.random_chance" -> values.put("chance", "0.5");
-            case "action.send_message" -> values.put("text", "Hello from CraftGraph");
-            case "action.run_command" -> values.put("command", "say Hello from CraftGraph");
-            case "action.play_sound" -> values.put("sound", "ENTITY_EXPERIENCE_ORB_PICKUP");
-            case "action.spawn_entity" -> values.put("entityType", "ZOMBIE");
+            case "logic.compare_values" -> values.put("operator", "==");
+            case "action.send_message" -> values.put("text", "");
+            case "action.run_command" -> values.put("command", "");
+            case "action.play_sound" -> values.put("sound", "");
+            case "action.spawn_entity" -> values.put("entityType", "");
+            case "action.give_item" -> {
+                values.put("material", "DIAMOND");
+                values.put("amount", "1");
+            }
             default -> {
             }
         }

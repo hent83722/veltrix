@@ -30,6 +30,7 @@ public final class NodeView extends VBox {
     private double dragStartNodeY;
     private double dragStartParentX;
     private double dragStartParentY;
+    private boolean dragGestureActive;
 
     public NodeView(Node node,
                     BiConsumer<Node, MouseEvent> onPressed,
@@ -72,8 +73,10 @@ public final class NodeView extends VBox {
             }
             Object target = e.getTarget();
             if (target instanceof TextInputControl || target instanceof ButtonBase || target instanceof Circle) {
+                dragGestureActive = false;
                 return;
             }
+            dragGestureActive = true;
             dragStartNodeX = node.x();
             dragStartNodeY = node.y();
             Point2D parentPoint = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
@@ -84,7 +87,7 @@ public final class NodeView extends VBox {
         });
 
         addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> {
-            if (!e.isPrimaryButtonDown()) {
+            if (!e.isPrimaryButtonDown() || !dragGestureActive) {
                 return;
             }
             Point2D parentPoint = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
@@ -95,6 +98,10 @@ public final class NodeView extends VBox {
         });
 
         addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {
+            if (!dragGestureActive) {
+                return;
+            }
+            dragGestureActive = false;
             onReleased.accept(node);
             e.consume();
         });
@@ -166,12 +173,27 @@ public final class NodeView extends VBox {
         switch (node.type()) {
             case "data.text" -> addTextPropertyEditor(editorBox, "Text", "value", node.valueOrDefault("value", ""));
             case "data.number" -> addTextPropertyEditor(editorBox, "Number", "value", node.valueOrDefault("value", "1"));
+            case "data.location" -> {
+                addTextPropertyEditor(editorBox, "World", "world", node.valueOrDefault("world", "world"));
+                addTextPropertyEditor(editorBox, "X", "x", node.valueOrDefault("x", "0"));
+                addTextPropertyEditor(editorBox, "Y", "y", node.valueOrDefault("y", "64"));
+                addTextPropertyEditor(editorBox, "Z", "z", node.valueOrDefault("z", "0"));
+            }
+            case "data.itemstack" -> {
+                addTextPropertyEditor(editorBox, "Material", "material", node.valueOrDefault("material", "DIAMOND"));
+                addTextPropertyEditor(editorBox, "Amount", "amount", node.valueOrDefault("amount", "1"));
+            }
             case "logic.delay_timer" -> addTextPropertyEditor(editorBox, "Ticks", "ticks", node.valueOrDefault("ticks", "20"));
             case "logic.random_chance" -> addTextPropertyEditor(editorBox, "Chance", "chance", node.valueOrDefault("chance", "0.5"));
-            case "action.send_message" -> addTextPropertyEditor(editorBox, "Default Text", "text", node.valueOrDefault("text", "Hello"));
-            case "action.run_command" -> addTextPropertyEditor(editorBox, "Command", "command", node.valueOrDefault("command", "say Hello"));
-            case "action.play_sound" -> addTextPropertyEditor(editorBox, "Sound", "sound", node.valueOrDefault("sound", "ENTITY_EXPERIENCE_ORB_PICKUP"));
-            case "action.spawn_entity" -> addTextPropertyEditor(editorBox, "Entity", "entityType", node.valueOrDefault("entityType", "ZOMBIE"));
+            case "logic.compare_values" -> addTextPropertyEditor(editorBox, "Operator", "operator", node.valueOrDefault("operator", "=="));
+            case "action.send_message" -> addTextPropertyEditor(editorBox, "Default Text", "text", node.valueOrDefault("text", ""));
+            case "action.run_command" -> addTextPropertyEditor(editorBox, "Command", "command", node.valueOrDefault("command", ""));
+            case "action.play_sound" -> addTextPropertyEditor(editorBox, "Sound", "sound", node.valueOrDefault("sound", ""));
+            case "action.spawn_entity" -> addTextPropertyEditor(editorBox, "Entity", "entityType", node.valueOrDefault("entityType", ""));
+            case "action.give_item" -> {
+                addTextPropertyEditor(editorBox, "Default Material", "material", node.valueOrDefault("material", "DIAMOND"));
+                addTextPropertyEditor(editorBox, "Default Amount", "amount", node.valueOrDefault("amount", "1"));
+            }
             default -> {
                 return;
             }
