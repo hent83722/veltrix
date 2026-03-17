@@ -1,4 +1,4 @@
-package io.mibhutt.craftgraph.model;
+package io.veltrix.model;
 
 public enum NodeCategory {
     EVENT("event", "#d64545"),

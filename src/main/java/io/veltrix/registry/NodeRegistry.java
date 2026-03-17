@@ -1,7 +1,4 @@
-package io.mibhutt.craftgraph.registry;
-
-import io.mibhutt.craftgraph.model.NodeCategory;
-import io.mibhutt.craftgraph.model.NodeDefinition;
+package io.veltrix.registry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import io.veltrix.model.NodeCategory;
+import io.veltrix.model.NodeDefinition;
 
 public final class NodeRegistry {
     private final Map<String, NodeDefinition> byType = new LinkedHashMap<>();

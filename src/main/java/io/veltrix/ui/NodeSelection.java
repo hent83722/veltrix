@@ -1,4 +1,4 @@
-package io.mibhutt.craftgraph.ui;
+package io.veltrix.ui;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;

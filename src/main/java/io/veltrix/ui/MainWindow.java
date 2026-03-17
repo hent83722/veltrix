@@ -1,11 +1,5 @@
-package io.mibhutt.craftgraph.ui;
+package io.veltrix.ui;
 
-import io.mibhutt.craftgraph.export.PluginExporter;
-import io.mibhutt.craftgraph.graph.GraphManager;
-import io.mibhutt.craftgraph.model.NodeCategory;
-import io.mibhutt.craftgraph.model.NodeDefinition;
-import io.mibhutt.craftgraph.registry.DefaultNodes;
-import io.mibhutt.craftgraph.registry.NodeRegistry;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -27,15 +21,23 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.stream.Collectors;
+
+import io.veltrix.export.PluginExporter;
+import io.veltrix.graph.GraphManager;
+import io.veltrix.model.NodeCategory;
+import io.veltrix.model.NodeDefinition;
+import io.veltrix.registry.DefaultNodes;
+import io.veltrix.registry.NodeRegistry;
 
 public final class MainWindow extends BorderPane {
     private final GraphManager graph = new GraphManager();
     private final NodeRegistry registry = DefaultNodes.createRegistry();
     private final NodeCanvas canvas = new NodeCanvas(graph, registry);
     private final Label status = new Label("Ready");
-    private final TextField pluginNameField = new TextField("CraftGraphPlugin");
-    private final TextField packageNameField = new TextField("io.mibhutt.generated");
+    private final TextField pluginNameField = new TextField("Veltrix");
+    private final TextField packageNameField = new TextField("io.veltrix.generated");
 
     public MainWindow() {
         getStyleClass().add("app-root");
@@ -71,10 +73,6 @@ public final class MainWindow extends BorderPane {
         exportBtn.getStyleClass().add("accent-btn");
         exportBtn.setOnAction(e -> exportPlugin(false));
 
-        Button exportCompileBtn = new Button("Export + Compile");
-        exportCompileBtn.getStyleClass().add("accent-btn");
-        exportCompileBtn.setOnAction(e -> exportPlugin(true));
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -84,24 +82,68 @@ public final class MainWindow extends BorderPane {
             new Separator(),
             groupBtn, duplicateBtn, deleteBtn,
             spacer,
-            exportBtn, exportCompileBtn);
+            exportBtn);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("toolbar");
         return bar;
     }
 
-    private ScrollPane buildNodePalette() {
+    private VBox buildNodePalette() {
+        VBox panel = new VBox(8);
+        panel.getStyleClass().add("node-palette");
+        panel.setPadding(new Insets(8));
+        panel.setPrefWidth(280);
+
+        Button exportCompileBtn = new Button("Export + Compile");
+        exportCompileBtn.getStyleClass().add("accent-btn");
+        exportCompileBtn.setMaxWidth(Double.MAX_VALUE);
+        exportCompileBtn.setOnAction(e -> exportPlugin(true));
+
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search nodes...");
+
         VBox list = new VBox(10);
-        list.getStyleClass().add("node-palette");
-        list.setPadding(new Insets(8));
+        list.setFillWidth(true);
+        populateNodePaletteList(list, "");
+
+        searchField.textProperty().addListener((obs, oldValue, newValue) ->
+            populateNodePaletteList(list, newValue)
+        );
+
+        ScrollPane listScroll = new ScrollPane(list);
+        listScroll.setFitToWidth(true);
+        listScroll.setFitToHeight(true);
+        listScroll.setPannable(true);
+        listScroll.getStyleClass().add("palette-scroll");
+        VBox.setVgrow(listScroll, Priority.ALWAYS);
+
+        panel.getChildren().addAll(exportCompileBtn, searchField, listScroll);
+        return panel;
+    }
+
+    private void populateNodePaletteList(VBox list, String queryRaw) {
+        list.getChildren().clear();
+        String query = queryRaw == null ? "" : queryRaw.trim().toLowerCase(Locale.ROOT);
 
         registry.byCategory().entrySet().stream()
             .sorted(Comparator.comparingInt(e -> categoryOrder(e.getKey())))
             .forEach(entry -> {
+                var matching = entry.getValue().stream()
+                    .filter(def -> query.isEmpty()
+                        || def.displayName().toLowerCase(Locale.ROOT).contains(query)
+                        || def.type().toLowerCase(Locale.ROOT).contains(query)
+                        || entry.getKey().name().toLowerCase(Locale.ROOT).contains(query))
+                    .toList();
+
+                if (matching.isEmpty()) {
+                    return;
+                }
+
                 Label title = new Label(entry.getKey().name());
                 title.getStyleClass().addAll("palette-category", "cat-" + entry.getKey().key());
                 list.getChildren().add(title);
-                for (NodeDefinition def : entry.getValue()) {
+
+                for (NodeDefinition def : matching) {
                     Button add = new Button(def.displayName());
                     add.getStyleClass().addAll("palette-node", "node-" + def.category().key());
                     add.setMaxWidth(Double.MAX_VALUE);
@@ -110,26 +152,15 @@ public final class MainWindow extends BorderPane {
                 }
             });
 
-        ScrollPane scrollPane = new ScrollPane(list);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefWidth(260);
-        scrollPane.getStyleClass().add("palette-scroll");
-        return scrollPane;
+        if (list.getChildren().isEmpty()) {
+            Label empty = new Label("No nodes found");
+            empty.getStyleClass().add("palette-category");
+            list.getChildren().add(empty);
+        }
     }
 
     private HBox buildStatusBar() {
-        Button exportBtn = new Button("Export Plugin");
-        exportBtn.getStyleClass().add("accent-btn");
-        exportBtn.setOnAction(e -> exportPlugin(false));
-
-        Button exportCompileBtn = new Button("Export + Compile");
-        exportCompileBtn.getStyleClass().add("accent-btn");
-        exportCompileBtn.setOnAction(e -> exportPlugin(true));
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox bar = new HBox(10, status, spacer, exportBtn, exportCompileBtn);
+        HBox bar = new HBox(10, status);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("statusbar");
         return bar;

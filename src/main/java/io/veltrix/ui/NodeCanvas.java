@@ -1,13 +1,5 @@
-package io.mibhutt.craftgraph.ui;
+package io.veltrix.ui;
 
-import io.mibhutt.craftgraph.graph.GraphManager;
-import io.mibhutt.craftgraph.model.Connection;
-import io.mibhutt.craftgraph.model.Node;
-import io.mibhutt.craftgraph.model.NodeGroup;
-import io.mibhutt.craftgraph.model.Port;
-import io.mibhutt.craftgraph.model.PortDirection;
-import io.mibhutt.craftgraph.model.PortKind;
-import io.mibhutt.craftgraph.registry.NodeRegistry;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
@@ -33,6 +25,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import io.veltrix.graph.GraphManager;
+import io.veltrix.model.Connection;
+import io.veltrix.model.Node;
+import io.veltrix.model.NodeGroup;
+import io.veltrix.model.Port;
+import io.veltrix.model.PortDirection;
+import io.veltrix.model.PortKind;
+import io.veltrix.registry.NodeRegistry;
 
 public final class NodeCanvas extends StackPane {
     private static final double GRID_SIZE = 32.0;
@@ -258,6 +259,9 @@ public final class NodeCanvas extends StackPane {
 
     private void setupKeyboardShortcuts() {
         setOnKeyPressed(e -> {
+            if (getScene() != null && getScene().getFocusOwner() instanceof TextInputControl) {
+                return;
+            }
             if (e.getCode() == KeyCode.DELETE || e.getCode() == KeyCode.BACK_SPACE) {
                 if (!selection.isEmpty()) {
                     deleteSelection();
@@ -300,15 +304,6 @@ public final class NodeCanvas extends StackPane {
 
     private void onNodePressed(Node node, MouseEvent e) {
         requestFocus();
-        if (connectingFromPortId != null && e.getButton() == MouseButton.PRIMARY) {
-            if (tryConnectToFirstCompatibleInput(node)) {
-                cancelTemporaryWire();
-                refreshConnections();
-                e.consume();
-                return;
-            }
-        }
-
         Point2D worldPos = sceneToWorld(new Point2D(e.getSceneX(), e.getSceneY()));
         draggingNodeId = node.id();
         dragNodeOffsetX = worldPos.getX() - node.x();
@@ -469,21 +464,6 @@ public final class NodeCanvas extends StackPane {
         connectingFromPortId = null;
         connectingKind = null;
         temporaryWire = null;
-    }
-
-    private boolean tryConnectToFirstCompatibleInput(Node node) {
-        Optional<Port> start = graph.findPort(connectingFromPortId);
-        if (start.isEmpty()) {
-            return false;
-        }
-        for (Port input : node.inputPorts()) {
-            if (graph.connect(start.get().id(), input.id()).isPresent()) {
-                statusConsumer.accept("Connected " + start.get().name() + " -> " + input.name());
-                return true;
-            }
-        }
-        statusConsumer.accept("No compatible input found on " + node.displayName());
-        return false;
     }
 
     private boolean isPointerOverNode(MouseEvent e) {

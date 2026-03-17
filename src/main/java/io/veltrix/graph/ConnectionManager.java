@@ -1,14 +1,14 @@
-package io.mibhutt.craftgraph.graph;
-
-import io.mibhutt.craftgraph.model.Connection;
-import io.mibhutt.craftgraph.model.Port;
-import io.mibhutt.craftgraph.model.PortDirection;
-import io.mibhutt.craftgraph.model.PortType;
+package io.veltrix.graph;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import io.veltrix.model.Connection;
+import io.veltrix.model.Port;
+import io.veltrix.model.PortDirection;
+import io.veltrix.model.PortType;
 
 public final class ConnectionManager {
     public Optional<Connection> connect(Port from, Port to, List<Connection> existing, Map<String, Port> portsById) {

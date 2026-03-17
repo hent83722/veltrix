@@ -1,9 +1,9 @@
-package io.mibhutt.craftgraph.registry;
+package io.veltrix.registry;
 
-import io.mibhutt.craftgraph.model.NodeCategory;
-import io.mibhutt.craftgraph.model.NodeDefinition;
-import io.mibhutt.craftgraph.model.PortKind;
-import io.mibhutt.craftgraph.model.PortType;
+import io.veltrix.model.NodeCategory;
+import io.veltrix.model.NodeDefinition;
+import io.veltrix.model.PortKind;
+import io.veltrix.model.PortType;
 
 public final class DefaultNodes {
     private DefaultNodes() {}
@@ -49,6 +49,58 @@ public final class DefaultNodes {
             .output("Player", PortKind.DATA, PortType.PLAYER)
             .output("Message", PortKind.DATA, PortType.TEXT)
             .build());
+        registry.register(NodeDefinition.builder("event.player_move", "Player Move", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("From", PortKind.DATA, PortType.LOCATION)
+            .output("To", PortKind.DATA, PortType.LOCATION)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_death", "Player Death", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Killer", PortKind.DATA, PortType.PLAYER)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_damage", "Player Damage", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Damage", PortKind.DATA, PortType.NUMBER)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_interact", "Player Interact", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Location", PortKind.DATA, PortType.LOCATION)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_drop_item", "Player Drop Item", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_pickup_item", "Player Pickup Item", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
+        registry.register(NodeDefinition.builder("event.entity_death", "Entity Death", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Entity", PortKind.DATA, PortType.ENTITY)
+            .output("Killer", PortKind.DATA, PortType.PLAYER)
+            .build());
+        registry.register(NodeDefinition.builder("event.block_explode", "Block Explode", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Location", PortKind.DATA, PortType.LOCATION)
+            .build());
+        registry.register(NodeDefinition.builder("event.redstone_change", "Redstone Change", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Location", PortKind.DATA, PortType.LOCATION)
+            .output("Power", PortKind.DATA, PortType.NUMBER)
+            .build());
+        registry.register(NodeDefinition.builder("event.command_run", "Command Run", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Command", PortKind.DATA, PortType.TEXT)
+            .output("Arguments", PortKind.DATA, PortType.TEXT)
+            .build());
         registry.register(NodeDefinition.builder("event.server_tick", "Server Tick", NodeCategory.EVENT)
             .output("Then", PortKind.EXECUTION, PortType.FLOW)
             .build());
@@ -88,6 +140,15 @@ public final class DefaultNodes {
         registry.register(NodeDefinition.builder("logic.random_chance", "Random Chance", NodeCategory.LOGIC)
             .input("Chance", PortKind.DATA, PortType.NUMBER)
             .output("Success", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.text_join", "Text Join", NodeCategory.LOGIC)
+            .input("A", PortKind.DATA, PortType.TEXT)
+            .input("B", PortKind.DATA, PortType.TEXT)
+            .output("Text", PortKind.DATA, PortType.TEXT)
+            .build());
+        registry.register(NodeDefinition.builder("logic.number_to_text", "Number To Text", NodeCategory.LOGIC)
+            .input("Number", PortKind.DATA, PortType.NUMBER)
+            .output("Text", PortKind.DATA, PortType.TEXT)
             .build());
     }
 

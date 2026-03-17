@@ -1,4 +1,4 @@
-package io.mibhutt.craftgraph;
+package io.veltrix;
 
 public final class Launcher {
     private Launcher() {

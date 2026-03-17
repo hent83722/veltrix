@@ -1,6 +1,6 @@
-package io.mibhutt.craftgraph;
+package io.veltrix;
 
-import io.mibhutt.craftgraph.ui.MainWindow;
+import io.veltrix.ui.MainWindow;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -12,7 +12,7 @@ public final class MainApp extends Application {
         Scene scene = new Scene(root, 1440, 900);
         scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
 
-        stage.setTitle("CraftGraph - Minecraft Visual Plugin Editor");
+        stage.setTitle("Veltrix - Minecraft Visual Plugin Editor");
         stage.setScene(scene);
         stage.show();
     }

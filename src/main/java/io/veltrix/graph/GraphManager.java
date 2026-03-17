@@ -1,15 +1,15 @@
-package io.mibhutt.craftgraph.graph;
-
-import io.mibhutt.craftgraph.model.Connection;
-import io.mibhutt.craftgraph.model.Node;
-import io.mibhutt.craftgraph.model.NodeGroup;
-import io.mibhutt.craftgraph.model.Port;
+package io.veltrix.graph;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import io.veltrix.model.Connection;
+import io.veltrix.model.Node;
+import io.veltrix.model.NodeGroup;
+import io.veltrix.model.Port;
 
 public final class GraphManager {
     private final List<Node> nodes = new ArrayList<>();

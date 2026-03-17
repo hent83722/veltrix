@@ -1,11 +1,4 @@
-package io.mibhutt.craftgraph.export;
-
-import io.mibhutt.craftgraph.graph.GraphManager;
-import io.mibhutt.craftgraph.model.Connection;
-import io.mibhutt.craftgraph.model.Node;
-import io.mibhutt.craftgraph.model.Port;
-import io.mibhutt.craftgraph.model.PortDirection;
-import io.mibhutt.craftgraph.model.PortKind;
+package io.veltrix.export;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,6 +7,13 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+
+import io.veltrix.graph.GraphManager;
+import io.veltrix.model.Connection;
+import io.veltrix.model.Node;
+import io.veltrix.model.Port;
+import io.veltrix.model.PortDirection;
+import io.veltrix.model.PortKind;
 
 public final class PluginExporter {
     public record ExportResult(Path outputDir, List<String> generatedFiles) {}
@@ -148,7 +148,7 @@ public final class PluginExporter {
         value = value.replaceAll("-+", "-");
         value = value.replaceAll("^-|-$", "");
         if (value.isBlank()) {
-            return "CraftGraphGenerated";
+            return "VeltrixGenerated";
         }
         return value;
     }
@@ -159,14 +159,25 @@ public final class PluginExporter {
             .append("import org.bukkit.Bukkit;\n")
             .append("import org.bukkit.Location;\n")
             .append("import org.bukkit.Sound;\n")
+            .append("import org.bukkit.entity.Entity;\n")
             .append("import org.bukkit.entity.EntityType;\n")
             .append("import org.bukkit.entity.Player;\n")
             .append("import org.bukkit.event.EventHandler;\n")
             .append("import org.bukkit.event.Listener;\n")
             .append("import org.bukkit.event.block.BlockBreakEvent;\n")
+            .append("import org.bukkit.event.block.BlockExplodeEvent;\n")
             .append("import org.bukkit.event.block.BlockPlaceEvent;\n")
+            .append("import org.bukkit.event.block.BlockRedstoneEvent;\n")
+            .append("import org.bukkit.event.entity.EntityDamageEvent;\n")
+            .append("import org.bukkit.event.entity.EntityDeathEvent;\n")
+            .append("import org.bukkit.event.entity.EntityPickupItemEvent;\n")
             .append("import org.bukkit.event.player.AsyncPlayerChatEvent;\n")
+            .append("import org.bukkit.event.player.PlayerCommandPreprocessEvent;\n")
+            .append("import org.bukkit.event.entity.PlayerDeathEvent;\n")
+            .append("import org.bukkit.event.player.PlayerDropItemEvent;\n")
+            .append("import org.bukkit.event.player.PlayerInteractEvent;\n")
             .append("import org.bukkit.event.player.PlayerJoinEvent;\n")
+            .append("import org.bukkit.event.player.PlayerMoveEvent;\n")
             .append("import org.bukkit.event.player.PlayerQuitEvent;\n")
             .append("import org.bukkit.inventory.ItemStack;\n")
             .append("import org.bukkit.plugin.java.JavaPlugin;\n")
@@ -196,6 +207,28 @@ public final class PluginExporter {
             .append("            case \"<=\" -> toNumber(a) <= toNumber(b);\n")
             .append("            default -> java.util.Objects.equals(a, b);\n")
             .append("        };\n")
+            .append("    }\n\n")
+            .append("    private String extractCommandName(String raw) {\n")
+            .append("        if (raw == null) {\n")
+            .append("            return \"\";\n")
+            .append("        }\n")
+            .append("        String trimmed = raw.trim();\n")
+            .append("        if (trimmed.startsWith(\"/\")) {\n")
+            .append("            trimmed = trimmed.substring(1);\n")
+            .append("        }\n")
+            .append("        int split = trimmed.indexOf(' ');\n")
+            .append("        return split >= 0 ? trimmed.substring(0, split) : trimmed;\n")
+            .append("    }\n\n")
+            .append("    private String extractCommandArgs(String raw) {\n")
+            .append("        if (raw == null) {\n")
+            .append("            return \"\";\n")
+            .append("        }\n")
+            .append("        String trimmed = raw.trim();\n")
+            .append("        if (trimmed.startsWith(\"/\")) {\n")
+            .append("            trimmed = trimmed.substring(1);\n")
+            .append("        }\n")
+            .append("        int split = trimmed.indexOf(' ');\n")
+            .append("        return split >= 0 ? trimmed.substring(split + 1) : \"\";\n")
             .append("    }\n\n")
             .append("    public void bootstrap() {\n");
 
@@ -285,6 +318,94 @@ public final class PluginExporter {
                     new EventContext("event.getPlayer()", "event.getMessage()", "event.getPlayer().getLocation()"), body, new HashSet<>());
                 body.append("    }\n\n");
             }
+            case "event.player_move" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(PlayerMoveEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getPlayer()", null, "event.getTo()", "event.getFrom()", "event.getTo()",
+                        null, null, null, null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.player_death" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(PlayerDeathEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getEntity()", null, "event.getEntity().getLocation()", null, null,
+                        "event.getEntity().getKiller()", null, null, null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.player_damage" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(EntityDamageEvent event) {\n")
+                    .append("        if (!(event.getEntity() instanceof Player player)) {\n")
+                    .append("            return;\n")
+                    .append("        }\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("player", null, "player.getLocation()", null, null,
+                        null, "event.getFinalDamage()", null, null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.player_interact" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(PlayerInteractEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getPlayer()", null,
+                        "event.getClickedBlock() != null ? event.getClickedBlock().getLocation() : event.getPlayer().getLocation()",
+                        null, null, null, null, "event.getItem()", null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.player_drop_item" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(PlayerDropItemEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getPlayer()", null, "event.getPlayer().getLocation()", null, null,
+                        null, null, "event.getItemDrop().getItemStack()", null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.player_pickup_item" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(EntityPickupItemEvent event) {\n")
+                    .append("        if (!(event.getEntity() instanceof Player player)) {\n")
+                    .append("            return;\n")
+                    .append("        }\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("player", null, "player.getLocation()", null, null,
+                        null, null, "event.getItem().getItemStack()", null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.entity_death" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(EntityDeathEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getEntity().getKiller()", null, "event.getEntity().getLocation()", null, null,
+                        "event.getEntity().getKiller()", null, null, "event.getEntity()", null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.block_explode" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(BlockExplodeEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext(null, null, "event.getBlock().getLocation()", null, null,
+                        null, null, null, null, null, null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.redstone_change" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(BlockRedstoneEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext(null, null, "event.getBlock().getLocation()", null, null,
+                        null, null, null, null, "event.getNewCurrent()", null, null), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
+            case "event.command_run" -> {
+                body.append("    @EventHandler\n")
+                    .append("    public void ").append(methodName).append("(PlayerCommandPreprocessEvent event) {\n");
+                appendFlowFromPort(graph, eventNode, "Then", "        ",
+                    new EventContext("event.getPlayer()", null, "event.getPlayer().getLocation()", null, null,
+                        null, null, null, null, null,
+                        "extractCommandName(event.getMessage())", "extractCommandArgs(event.getMessage())"), body, new HashSet<>());
+                body.append("    }\n\n");
+            }
             case "event.server_tick" -> {
                 body.append("    public void ").append(methodName).append("() {\n")
                     .append("        Bukkit.getScheduler().runTaskTimer(plugin, () -> {\n");
@@ -342,7 +463,7 @@ public final class PluginExporter {
     private String actionCode(GraphManager graph, Node node, EventContext context) {
         String playerExpr = resolveInputExpression(graph, node, "Player", context, context.playerExpr());
         String textExpr = resolveInputExpression(graph, node, "Text", context,
-            quoteJava(node.valueOrDefault("text", "Hello from CraftGraph")));
+            quoteJava(node.valueOrDefault("text", "Hello from Veltrix")));
         String locationExpr = resolveInputExpression(graph, node, "Location", context,
             context.locationExpr() != null ? context.locationExpr() : "new Location(Bukkit.getWorlds().get(0), 0, 64, 0)");
         String itemExpr = resolveInputExpression(graph, node, "Item", context,
@@ -397,7 +518,7 @@ public final class PluginExporter {
                                     EventContext context, String fallback) {
         return switch (sourceNode.type()) {
             case "data.number" -> normalizeNumber(sourceNode.valueOrDefault("value", "1"));
-            case "data.text" -> quoteJava(sourceNode.valueOrDefault("value", "CraftGraph"));
+            case "data.text" -> quoteJava(sourceNode.valueOrDefault("value", "Veltrix"));
             case "data.player" -> context.playerExpr() != null ? context.playerExpr() : "null";
             case "data.location" -> {
                 String world = sourceNode.valueOrDefault("world", "world");
@@ -417,6 +538,90 @@ public final class PluginExporter {
             case "event.player_break_block", "event.player_place_block" -> sourceOutputName.equalsIgnoreCase("Location")
                 ? context.locationExpr()
                 : context.playerExpr();
+            case "event.player_move" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("From") && context.fromExpr() != null) {
+                    yield context.fromExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("To") && context.toExpr() != null) {
+                    yield context.toExpr();
+                }
+                yield fallback;
+            }
+            case "event.player_death" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Killer") && context.killerExpr() != null) {
+                    yield context.killerExpr();
+                }
+                yield fallback;
+            }
+            case "event.player_damage" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Damage") && context.damageExpr() != null) {
+                    yield context.damageExpr();
+                }
+                yield fallback;
+            }
+            case "event.player_interact" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Location") && context.locationExpr() != null) {
+                    yield context.locationExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Item") && context.itemExpr() != null) {
+                    yield context.itemExpr();
+                }
+                yield fallback;
+            }
+            case "event.player_drop_item", "event.player_pickup_item" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Item") && context.itemExpr() != null) {
+                    yield context.itemExpr();
+                }
+                yield fallback;
+            }
+            case "event.entity_death" -> {
+                if (sourceOutputName.equalsIgnoreCase("Entity") && context.entityExpr() != null) {
+                    yield context.entityExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Killer") && context.killerExpr() != null) {
+                    yield context.killerExpr();
+                }
+                yield fallback;
+            }
+            case "event.block_explode" -> sourceOutputName.equalsIgnoreCase("Location") && context.locationExpr() != null
+                ? context.locationExpr()
+                : fallback;
+            case "event.redstone_change" -> {
+                if (sourceOutputName.equalsIgnoreCase("Location") && context.locationExpr() != null) {
+                    yield context.locationExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Power") && context.powerExpr() != null) {
+                    yield context.powerExpr();
+                }
+                yield fallback;
+            }
+            case "event.command_run" -> {
+                if (sourceOutputName.equalsIgnoreCase("Player")) {
+                    yield context.playerExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Command") && context.commandExpr() != null) {
+                    yield context.commandExpr();
+                }
+                if (sourceOutputName.equalsIgnoreCase("Arguments") && context.argumentsExpr() != null) {
+                    yield context.argumentsExpr();
+                }
+                yield fallback;
+            }
             case "event.player_join", "event.player_leave" -> context.playerExpr();
             case "logic.compare_values" -> {
                 String a = resolveInputExpression(graph, sourceNode, "A", context, "null");
@@ -442,6 +647,15 @@ public final class PluginExporter {
                 String chance = resolveInputExpression(graph, sourceNode, "Chance", context,
                     normalizeNumber(sourceNode.valueOrDefault("chance", "0.5")));
                 yield "(Math.random() < Math.max(0.0, Math.min(1.0, " + chance + ")))";
+            }
+            case "logic.text_join" -> {
+                String a = resolveInputExpression(graph, sourceNode, "A", context, "\"\"");
+                String b = resolveInputExpression(graph, sourceNode, "B", context, "\"\"");
+                yield "(" + a + " + " + b + ")";
+            }
+            case "logic.number_to_text" -> {
+                String value = resolveInputExpression(graph, sourceNode, "Number", context, "0");
+                yield "String.valueOf(" + value + ")";
             }
             default -> fallback;
         };
@@ -524,5 +738,22 @@ public final class PluginExporter {
             .toList();
     }
 
-    private record EventContext(String playerExpr, String messageExpr, String locationExpr) {}
+    private record EventContext(
+        String playerExpr,
+        String messageExpr,
+        String locationExpr,
+        String fromExpr,
+        String toExpr,
+        String killerExpr,
+        String damageExpr,
+        String itemExpr,
+        String entityExpr,
+        String powerExpr,
+        String commandExpr,
+        String argumentsExpr
+    ) {
+        private EventContext(String playerExpr, String messageExpr, String locationExpr) {
+            this(playerExpr, messageExpr, locationExpr, null, null, null, null, null, null, null, null, null);
+        }
+    }
 }

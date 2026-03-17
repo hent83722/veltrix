@@ -1,7 +1,5 @@
-package io.mibhutt.craftgraph.ui;
+package io.veltrix.ui;
 
-import io.mibhutt.craftgraph.model.Node;
-import io.mibhutt.craftgraph.model.Port;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -20,6 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import io.veltrix.model.Node;
+import io.veltrix.model.Port;
 
 public final class NodeView extends VBox {
     private final Node node;
@@ -71,8 +72,7 @@ public final class NodeView extends VBox {
             if (!e.isPrimaryButtonDown()) {
                 return;
             }
-            Object target = e.getTarget();
-            if (target instanceof TextInputControl || target instanceof ButtonBase || target instanceof Circle) {
+            if (isInsideTextInput(e) || e.getTarget() instanceof ButtonBase || e.getTarget() instanceof Circle) {
                 dragGestureActive = false;
                 return;
             }
@@ -152,7 +152,7 @@ public final class NodeView extends VBox {
             box.getChildren().addAll(label, circle);
         }
 
-        circle.setOnMouseClicked(e -> {
+        box.setOnMouseClicked(e -> {
             var bounds = circle.localToScene(circle.getBoundsInLocal());
             Point2D worldPoint = getParent().sceneToLocal(
                 bounds.getMinX() + bounds.getWidth() * 0.5,
@@ -211,6 +211,17 @@ public final class NodeView extends VBox {
         input.textProperty().addListener((obs, oldValue, newValue) -> node.setValue(key, newValue));
 
         editorBox.getChildren().addAll(label, input);
+    }
+
+    private boolean isInsideTextInput(MouseEvent e) {
+        javafx.scene.Node current = e.getPickResult() != null ? e.getPickResult().getIntersectedNode() : null;
+        while (current != null) {
+            if (current instanceof TextInputControl) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
     }
 
     public Point2D portCenterInWorld(String portId) {

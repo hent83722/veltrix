@@ -1,4 +1,4 @@
-package io.mibhutt.craftgraph.model;
+package io.veltrix.model;
 
 import java.util.UUID;
 
