@@ -113,6 +113,30 @@ public final class DefaultNodes {
             .output("True", PortKind.EXECUTION, PortType.FLOW)
             .output("False", PortKind.EXECUTION, PortType.FLOW)
             .build());
+        if (registry.find("logic.loop").isEmpty()) {
+            registry.register(NodeDefinition.builder("logic.loop", "Loop", NodeCategory.LOGIC)
+                .input("In", PortKind.EXECUTION, PortType.FLOW)
+                .input("Count", PortKind.DATA, PortType.NUMBER)
+                .output("Loop", PortKind.EXECUTION, PortType.FLOW)
+                .output("Done", PortKind.EXECUTION, PortType.FLOW)
+                .build());
+        }
+        if (registry.find("logic.foreach_player").isEmpty()) {
+            registry.register(NodeDefinition.builder("logic.foreach_player", "For Each Player", NodeCategory.LOGIC)
+                .input("In", PortKind.EXECUTION, PortType.FLOW)
+                .output("Loop", PortKind.EXECUTION, PortType.FLOW)
+                .output("Player", PortKind.DATA, PortType.PLAYER)
+                .output("Done", PortKind.EXECUTION, PortType.FLOW)
+                .build());
+        }
+        if (registry.find("logic.while").isEmpty()) {
+            registry.register(NodeDefinition.builder("logic.while", "While Loop", NodeCategory.LOGIC)
+                .input("In", PortKind.EXECUTION, PortType.FLOW)
+                .input("Condition", PortKind.DATA, PortType.BOOLEAN)
+                .output("Loop", PortKind.EXECUTION, PortType.FLOW)
+                .output("Done", PortKind.EXECUTION, PortType.FLOW)
+                .build());
+        }
         registry.register(NodeDefinition.builder("logic.compare_values", "Compare Values", NodeCategory.LOGIC)
             .input("A", PortKind.DATA, PortType.ANY)
             .input("B", PortKind.DATA, PortType.ANY)
@@ -141,6 +165,20 @@ public final class DefaultNodes {
             .input("Chance", PortKind.DATA, PortType.NUMBER)
             .output("Success", PortKind.DATA, PortType.BOOLEAN)
             .build());
+        if (registry.find("logic.random_number").isEmpty()) {
+            registry.register(NodeDefinition.builder("logic.random_number", "Random Number", NodeCategory.LOGIC)
+                .input("Min", PortKind.DATA, PortType.NUMBER)
+                .input("Max", PortKind.DATA, PortType.NUMBER)
+                .output("Value", PortKind.DATA, PortType.NUMBER)
+                .build());
+        }
+        if (registry.find("logic.math").isEmpty()) {
+            registry.register(NodeDefinition.builder("logic.math", "Math Operation", NodeCategory.LOGIC)
+                .input("A", PortKind.DATA, PortType.NUMBER)
+                .input("B", PortKind.DATA, PortType.NUMBER)
+                .output("Result", PortKind.DATA, PortType.NUMBER)
+                .build());
+        }
         registry.register(NodeDefinition.builder("logic.text_join", "Text Join", NodeCategory.LOGIC)
             .input("A", PortKind.DATA, PortType.TEXT)
             .input("B", PortKind.DATA, PortType.TEXT)

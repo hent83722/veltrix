@@ -186,6 +186,7 @@ public final class NodeView extends VBox {
             case "logic.delay_timer" -> addTextPropertyEditor(editorBox, "Ticks", "ticks", node.valueOrDefault("ticks", "20"));
             case "logic.random_chance" -> addTextPropertyEditor(editorBox, "Chance", "chance", node.valueOrDefault("chance", "0.5"));
             case "logic.compare_values" -> addTextPropertyEditor(editorBox, "Operator", "operator", node.valueOrDefault("operator", "=="));
+            case "logic.math" -> addTextPropertyEditor(editorBox, "Operator", "operator", node.valueOrDefault("operator", "+"));
             case "action.send_message" -> addTextPropertyEditor(editorBox, "Default Text", "text", node.valueOrDefault("text", ""));
             case "action.run_command" -> addTextPropertyEditor(editorBox, "Command", "command", node.valueOrDefault("command", ""));
             case "action.play_sound" -> addTextPropertyEditor(editorBox, "Sound", "sound", node.valueOrDefault("sound", ""));

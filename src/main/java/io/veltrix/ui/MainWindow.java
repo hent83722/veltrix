@@ -49,9 +49,6 @@ public final class MainWindow extends BorderPane {
         setBottom(buildStatusBar());
 
         canvas.setStatusConsumer(status::setText);
-        canvas.addNode("event.plugin_enable", 120, 120);
-        canvas.addNode("event.plugin_disable", 120, 300);
-        status.setText("Added default Plugin Enable / Plugin Disable nodes.");
     }
 
     private HBox buildToolbar() {

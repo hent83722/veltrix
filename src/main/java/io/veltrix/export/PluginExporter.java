@@ -444,6 +444,36 @@ public final class PluginExporter {
                 appendFlowFromPort(graph, node, "False", indent + "    ", context, body, new HashSet<>(callStack));
                 body.append(indent).append("}\n");
             }
+            case "logic.loop" -> {
+                String countExpr = resolveInputExpression(graph, node, "Count", context,
+                    normalizeNumber(node.valueOrDefault("count", "1")));
+                String loopVar = "loopCount_" + variableSuffix(node.id());
+                String idxVar = "i_" + variableSuffix(node.id());
+                body.append(indent).append("int ").append(loopVar)
+                    .append(" = (int) Math.max(0, Math.floor(toNumber(").append(countExpr).append(")));\n");
+                body.append(indent).append("for (int ").append(idxVar).append(" = 0; ").append(idxVar)
+                    .append(" < ").append(loopVar).append("; ").append(idxVar).append("++) {\n");
+                appendFlowFromPort(graph, node, "Loop", indent + "    ", context, body, new HashSet<>(callStack));
+                body.append(indent).append("}\n");
+                appendFlowFromPort(graph, node, "Done", indent, context, body, new HashSet<>(callStack));
+            }
+            case "logic.foreach_player" -> {
+                String playerVar = "loopPlayer_" + variableSuffix(node.id());
+                body.append(indent).append("for (Player ").append(playerVar).append(" : Bukkit.getOnlinePlayers()) {\n");
+                EventContext loopContext = withPlayerContext(context, playerVar);
+                appendFlowFromPort(graph, node, "Loop", indent + "    ", loopContext, body, new HashSet<>(callStack));
+                body.append(indent).append("}\n");
+                appendFlowFromPort(graph, node, "Done", indent, context, body, new HashSet<>(callStack));
+            }
+            case "logic.while" -> {
+                String conditionExpr = resolveInputExpression(graph, node, "Condition", context, "false");
+                String guardVar = "whileGuard_" + variableSuffix(node.id());
+                body.append(indent).append("int ").append(guardVar).append(" = 0;\n");
+                body.append(indent).append("while (").append(conditionExpr).append(" && ").append(guardVar).append("++ < 10000) {\n");
+                appendFlowFromPort(graph, node, "Loop", indent + "    ", context, body, new HashSet<>(callStack));
+                body.append(indent).append("}\n");
+                appendFlowFromPort(graph, node, "Done", indent, context, body, new HashSet<>(callStack));
+            }
             case "logic.delay_timer" -> {
                 String ticksExpr = resolveInputExpression(graph, node, "Ticks", context,
                     normalizeNumber(node.valueOrDefault("ticks", "20")));
@@ -648,6 +678,27 @@ public final class PluginExporter {
                     normalizeNumber(sourceNode.valueOrDefault("chance", "0.5")));
                 yield "(Math.random() < Math.max(0.0, Math.min(1.0, " + chance + ")))";
             }
+            case "logic.random_number" -> {
+                String min = resolveInputExpression(graph, sourceNode, "Min", context,
+                    normalizeNumber(sourceNode.valueOrDefault("min", "0")));
+                String max = resolveInputExpression(graph, sourceNode, "Max", context,
+                    normalizeNumber(sourceNode.valueOrDefault("max", "1")));
+                yield "(Math.min(toNumber(" + min + "), toNumber(" + max + ")) + (Math.random() * "
+                    + "(Math.max(toNumber(" + min + "), toNumber(" + max + ")) - Math.min(toNumber(" + min + "), toNumber(" + max + ")))))";
+            }
+            case "logic.math" -> {
+                String a = resolveInputExpression(graph, sourceNode, "A", context, "0");
+                String b = resolveInputExpression(graph, sourceNode, "B", context, "0");
+                String op = normalizeMathOperator(sourceNode.valueOrDefault("operator", "+"));
+                yield switch (op) {
+                    case "/" -> "(toNumber(" + b + ") == 0.0 ? 0.0 : (toNumber(" + a + ") / toNumber(" + b + ")))";
+                    case "%" -> "(toNumber(" + b + ") == 0.0 ? 0.0 : (toNumber(" + a + ") % toNumber(" + b + ")))";
+                    default -> "(toNumber(" + a + ") " + op + " toNumber(" + b + "))";
+                };
+            }
+            case "logic.foreach_player" -> sourceOutputName.equalsIgnoreCase("Player")
+                ? (context.playerExpr() != null ? context.playerExpr() : "null")
+                : fallback;
             case "logic.text_join" -> {
                 String a = resolveInputExpression(graph, sourceNode, "A", context, "\"\"");
                 String b = resolveInputExpression(graph, sourceNode, "B", context, "\"\"");
@@ -718,6 +769,39 @@ public final class PluginExporter {
             case "==", "!=", ">", ">=", "<", "<=" -> value.trim();
             default -> "==";
         };
+    }
+
+    private String normalizeMathOperator(String value) {
+        if (value == null || value.isBlank()) {
+            return "+";
+        }
+        return switch (value.trim()) {
+            case "+", "-", "*", "/", "%" -> value.trim();
+            default -> "+";
+        };
+    }
+
+    private String variableSuffix(String nodeId) {
+        String sanitized = (nodeId == null ? "node" : nodeId).replaceAll("[^a-zA-Z0-9]", "");
+        return sanitized.isBlank() ? "node" : sanitized;
+    }
+
+    private EventContext withPlayerContext(EventContext base, String playerExpr) {
+        String locationExpr = playerExpr + " != null ? " + playerExpr + ".getLocation() : null";
+        return new EventContext(
+            playerExpr,
+            base.messageExpr(),
+            locationExpr,
+            base.fromExpr(),
+            base.toExpr(),
+            base.killerExpr(),
+            base.damageExpr(),
+            base.itemExpr(),
+            base.entityExpr(),
+            base.powerExpr(),
+            base.commandExpr(),
+            base.argumentsExpr()
+        );
     }
 
     private List<Node> nextExecutionNodes(GraphManager graph, Node sourceNode, String outputPortName) {
