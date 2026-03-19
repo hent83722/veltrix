@@ -6,7 +6,7 @@ Veltrix is a visual node-based editor for building simple Minecraft Paper plugin
 
 ```bash
 mvn clean package
-java -jar target/veltrix-0.2.2.jar
+java -jar target/veltrix.jar
 ```
 
 ## Release Install
