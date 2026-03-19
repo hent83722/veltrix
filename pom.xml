@@ -6,7 +6,7 @@
 
     <groupId>io.veltrix</groupId>
     <artifactId>veltrix</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3</version>
     <name>Veltrix</name>
     <description>Visual node-based Minecraft plugin editor</description>
 

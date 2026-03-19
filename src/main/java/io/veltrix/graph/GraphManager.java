@@ -30,6 +30,13 @@ public final class GraphManager {
         return groups;
     }
 
+    public void clear() {
+        nodes.clear();
+        connections.clear();
+        groups.clear();
+        portsById.clear();
+    }
+
     public void addNode(Node node) {
         nodes.add(node);
         for (Port p : node.inputPorts()) {

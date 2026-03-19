@@ -1,6 +1,6 @@
 package io.veltrix;
 
-import io.veltrix.ui.MainWindow;
+import io.veltrix.ui.AppShell;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -8,7 +8,7 @@ import javafx.stage.Stage;
 public final class MainApp extends Application {
     @Override
     public void start(Stage stage) {
-        MainWindow root = new MainWindow();
+        AppShell root = new AppShell();
         Scene scene = new Scene(root, 1440, 900);
         scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
 
