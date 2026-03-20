@@ -34,9 +34,14 @@ import io.veltrix.model.Port;
 import io.veltrix.model.PortDirection;
 import io.veltrix.model.PortKind;
 import io.veltrix.registry.NodeRegistry;
+import javafx.application.Platform;
 
 public final class NodeCanvas extends StackPane {
     private static final double GRID_SIZE = 32.0;
+    private static final double MAX_WORLD_OFFSET = 1_000_000.0;
+    private static final double MIN_WORLD_OFFSET = -1_000_000.0;
+    private static final double MAX_NODE_COORD = 1_000_000.0;
+    private static final double MIN_NODE_COORD = -1_000_000.0;
 
     private final GraphManager graph;
     private final NodeRegistry registry;
@@ -72,6 +77,7 @@ public final class NodeCanvas extends StackPane {
 
     private Point2D boxStart;
     private final Rectangle selectionBox = new Rectangle();
+    private final Rectangle viewClip = new Rectangle();
 
     private Consumer<String> statusConsumer = s -> {};
 
@@ -81,6 +87,12 @@ public final class NodeCanvas extends StackPane {
 
         world.getChildren().addAll(groupLayer, connectionLayer, nodeLayer);
         getChildren().addAll(gridCanvas, world, overlayLayer);
+        gridCanvas.setManaged(false);
+        world.setManaged(false);
+        overlayLayer.setManaged(false);
+        groupLayer.setManaged(false);
+        connectionLayer.setManaged(false);
+        nodeLayer.setManaged(false);
 
         selectionBox.getStyleClass().add("selection-box");
         selectionBox.setManaged(false);
@@ -91,13 +103,16 @@ public final class NodeCanvas extends StackPane {
         groupLayer.setPickOnBounds(false);
         connectionLayer.setPickOnBounds(false);
         nodeLayer.setPickOnBounds(false);
+        setClip(viewClip);
 
         widthProperty().addListener((obs, oldV, newV) -> {
             gridCanvas.setWidth(newV.doubleValue());
+            viewClip.setWidth(newV.doubleValue());
             redrawGrid();
         });
         heightProperty().addListener((obs, oldV, newV) -> {
             gridCanvas.setHeight(newV.doubleValue());
+            viewClip.setHeight(newV.doubleValue());
             redrawGrid();
         });
 
@@ -118,6 +133,8 @@ public final class NodeCanvas extends StackPane {
             graph.addNode(node);
             createNodeView(node);
             refreshConnections();
+            centerOnNode(node);
+            Platform.runLater(() -> centerOnNode(node));
         });
     }
 
@@ -319,9 +336,11 @@ public final class NodeCanvas extends StackPane {
 
     private void onNodeDragged(Node node, double x, double y) {
         NodeView view = nodeViews.get(node.id());
-        node.setX(x);
-        node.setY(y);
-        view.relocate(x, y);
+        double nx = clamp(x, MIN_NODE_COORD, MAX_NODE_COORD);
+        double ny = clamp(y, MIN_NODE_COORD, MAX_NODE_COORD);
+        node.setX(nx);
+        node.setY(ny);
+        view.relocate(nx, ny);
         refreshConnections();
         refreshGroups();
     }
@@ -497,8 +516,9 @@ public final class NodeCanvas extends StackPane {
     }
 
     private void panTo(MouseEvent e) {
-        worldOffsetX = panOriginX + (e.getSceneX() - panStartX);
-        worldOffsetY = panOriginY + (e.getSceneY() - panStartY);
+        worldOffsetX = clamp(panOriginX + (e.getSceneX() - panStartX), MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        worldOffsetY = clamp(panOriginY + (e.getSceneY() - panStartY), MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        clampCameraToGraph();
         applyWorldTransform();
     }
 
@@ -511,9 +531,13 @@ public final class NodeCanvas extends StackPane {
 
         double worldX = (x - worldOffsetX) / oldScale;
         double worldY = (y - worldOffsetY) / oldScale;
+        if (!Double.isFinite(worldX) || !Double.isFinite(worldY)) {
+            return;
+        }
         worldScale = newScale;
-        worldOffsetX = x - worldX * worldScale;
-        worldOffsetY = y - worldY * worldScale;
+        worldOffsetX = clamp(x - worldX * worldScale, MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        worldOffsetY = clamp(y - worldY * worldScale, MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        clampCameraToGraph();
         applyWorldTransform();
     }
 
@@ -532,9 +556,11 @@ public final class NodeCanvas extends StackPane {
     }
 
     private void redrawGrid() {
+        double w = clamp(gridCanvas.getWidth(), 0, 20_000);
+        double h = clamp(gridCanvas.getHeight(), 0, 20_000);
         GraphicsContext gc = gridCanvas.getGraphicsContext2D();
         gc.setFill(Color.web("#111420"));
-        gc.fillRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
+        gc.fillRect(0, 0, w, h);
 
         gc.setStroke(Color.web("#20283b"));
         gc.setLineWidth(1);
@@ -547,12 +573,87 @@ public final class NodeCanvas extends StackPane {
         double xStart = worldOffsetX % scaledGrid;
         double yStart = worldOffsetY % scaledGrid;
 
-        for (double x = xStart; x < gridCanvas.getWidth(); x += scaledGrid) {
-            gc.strokeLine(x, 0, x, gridCanvas.getHeight());
+        for (double x = xStart; x < w; x += scaledGrid) {
+            gc.strokeLine(x, 0, x, h);
         }
-        for (double y = yStart; y < gridCanvas.getHeight(); y += scaledGrid) {
-            gc.strokeLine(0, y, gridCanvas.getWidth(), y);
+        for (double y = yStart; y < h; y += scaledGrid) {
+            gc.strokeLine(0, y, w, y);
         }
+    }
+
+    private void centerOnNode(Node node) {
+        NodeView view = nodeViews.get(node.id());
+        if (view == null) {
+            return;
+        }
+
+        double nodeCenterX = node.x() + (view.getWidth() > 1 ? view.getWidth() * 0.5 : view.prefWidth(-1) * 0.5);
+        double nodeCenterY = node.y() + (view.getHeight() > 1 ? view.getHeight() * 0.5 : 40);
+        centerOnWorld(nodeCenterX, nodeCenterY);
+    }
+
+    private void centerOnWorld(double worldX, double worldY) {
+        double viewportWidth = getWidth();
+        double viewportHeight = getHeight();
+        if (viewportWidth <= 1 || viewportHeight <= 1) {
+            return;
+        }
+
+        worldOffsetX = clamp(viewportWidth * 0.5 - worldX * worldScale, MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        worldOffsetY = clamp(viewportHeight * 0.5 - worldY * worldScale, MIN_WORLD_OFFSET, MAX_WORLD_OFFSET);
+        clampCameraToGraph();
+        applyWorldTransform();
+    }
+
+    private void clampCameraToGraph() {
+        double viewportWidth = getWidth();
+        double viewportHeight = getHeight();
+        if (viewportWidth <= 1 || viewportHeight <= 1) {
+            return;
+        }
+
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+
+        for (Node node : graph.nodes()) {
+            NodeView view = nodeViews.get(node.id());
+            double w = view != null && view.getWidth() > 1 ? view.getWidth() : 230;
+            double h = view != null && view.getHeight() > 1 ? view.getHeight() : 120;
+
+            minX = Math.min(minX, node.x());
+            minY = Math.min(minY, node.y());
+            maxX = Math.max(maxX, node.x() + w);
+            maxY = Math.max(maxY, node.y() + h);
+        }
+
+        if (!Double.isFinite(minX) || !Double.isFinite(minY) || !Double.isFinite(maxX) || !Double.isFinite(maxY)) {
+            return;
+        }
+
+        double worldPaddingX = Math.max(250, (viewportWidth / worldScale) * 0.35);
+        double worldPaddingY = Math.max(180, (viewportHeight / worldScale) * 0.35);
+
+        double boundMinX = minX - worldPaddingX;
+        double boundMaxX = maxX + worldPaddingX;
+        double boundMinY = minY - worldPaddingY;
+        double boundMaxY = maxY + worldPaddingY;
+
+        double minOffsetX = -boundMaxX * worldScale;
+        double maxOffsetX = viewportWidth - boundMinX * worldScale;
+        double minOffsetY = -boundMaxY * worldScale;
+        double maxOffsetY = viewportHeight - boundMinY * worldScale;
+
+        worldOffsetX = clamp(worldOffsetX, minOffsetX, maxOffsetX);
+        worldOffsetY = clamp(worldOffsetY, minOffsetY, maxOffsetY);
+    }
+
+    private double clamp(double value, double min, double max) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return 0.0;
+        }
+        return Math.max(min, Math.min(max, value));
     }
 
     private void startBoxSelection(MouseEvent e) {
