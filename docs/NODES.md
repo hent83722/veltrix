@@ -456,3 +456,377 @@ This document lists every built-in node, what it does, and its ports.
 - Compare operator defaults to `==` if invalid.
 - Numeric fields fallback safely if invalid input is entered.
 - Material, sound, and entity names should use Bukkit enum names.
+
+### Player Shoot Bow
+
+- Type: `event.player_shoot_bow`
+- Purpose: Triggered when a player shoots a bow.
+- Outputs:
+  - `Then` (Execution)
+  - `Player` (Data: Player)
+
+### Player Eat
+
+- Type: `event.player_eat`
+- Purpose: Triggered when a player eats food.
+- Outputs:
+  - `Then` (Execution)
+  - `Player` (Data: Player)
+
+### Player Toggle Sneak
+
+- Type: `event.player_toggle_sneak`
+- Purpose: Triggered when sneaking is toggled.
+- Outputs:
+  - `Then` (Execution)
+  - `Player` (Data: Player)
+  - `Sneaking` (Data: Boolean)
+
+### Player Toggle Sprint
+
+- Type: `event.player_toggle_sprint`
+- Purpose: Triggered when sprinting is toggled.
+- Outputs:
+  - `Then` (Execution)
+  - `Player` (Data: Player)
+  - `Sprinting` (Data: Boolean)
+
+### Weather Change
+
+- Type: `event.weather_change`
+- Purpose: Triggered when weather state changes.
+- Outputs:
+  - `Then` (Execution)
+  - `IsStorm` (Data: Boolean)
+
+### Time Change
+
+- Type: `event.time_change`
+- Purpose: Triggered when world time changes.
+- Outputs:
+  - `Then` (Execution)
+  - `Time` (Data: Number)
+
+## Newly Added Logic Nodes
+
+### Set Variable
+
+- Type: `logic.set_variable`
+- Purpose: Stores a global variable value.
+- Inputs:
+  - `In` (Execution)
+  - `Name` (Data: Text)
+  - `Value` (Data: Any)
+- Outputs:
+  - `Then` (Execution)
+
+### Get Variable
+
+- Type: `logic.get_variable`
+- Purpose: Retrieves a global variable value.
+- Inputs:
+  - `Name` (Data: Text)
+- Outputs:
+  - `Value` (Data: Any)
+
+### Set Player Variable
+
+- Type: `logic.set_player_variable`
+- Purpose: Stores a variable scoped to one player.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Name` (Data: Text)
+  - `Value` (Data: Any)
+- Outputs:
+  - `Then` (Execution)
+
+### Get Player Variable
+
+- Type: `logic.get_player_variable`
+- Purpose: Retrieves a player-scoped variable.
+- Inputs:
+  - `Player` (Data: Player)
+  - `Name` (Data: Text)
+- Outputs:
+  - `Value` (Data: Any)
+
+### Get Distance
+
+- Type: `logic.get_distance`
+- Purpose: Calculates distance between two locations.
+- Inputs:
+  - `Location A` (Data: Location)
+  - `Location B` (Data: Location)
+- Outputs:
+  - `Distance` (Data: Number)
+
+### Has Item
+
+- Type: `logic.player_has_item`
+- Purpose: Checks whether a player has an item.
+- Inputs:
+  - `Player` (Data: Player)
+  - `Item` (Data: ItemStack)
+- Outputs:
+  - `Has` (Data: Boolean)
+
+### Break Loop
+
+- Type: `logic.break`
+- Purpose: Loop control marker for break-style flow.
+- Inputs:
+  - `In` (Execution)
+- Outputs:
+  - `Then` (Execution)
+
+### Continue Loop
+
+- Type: `logic.continue`
+- Purpose: Loop control marker for continue-style flow.
+- Inputs:
+  - `In` (Execution)
+- Outputs:
+  - `Then` (Execution)
+
+### Cooldown Check
+
+- Type: `logic.cooldown`
+- Purpose: Returns whether cooldown key is ready.
+- Inputs:
+  - `Key` (Data: Text)
+  - `Time` (Data: Number)
+- Outputs:
+  - `Ready` (Data: Boolean)
+
+### Color Text
+
+- Type: `logic.color_text`
+- Purpose: Applies formatting/color codes to text.
+- Inputs:
+  - `Text` (Data: Text)
+- Outputs:
+  - `Text` (Data: Text)
+
+### Is Sneaking
+
+- Type: `logic.is_sneaking`
+- Purpose: Checks if player is sneaking.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Result` (Data: Boolean)
+
+### Is Sprinting
+
+- Type: `logic.is_sprinting`
+- Purpose: Checks if player is sprinting.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Result` (Data: Boolean)
+
+### Is On Ground
+
+- Type: `logic.is_on_ground`
+- Purpose: Checks if player is on the ground.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Result` (Data: Boolean)
+
+### Is In Water
+
+- Type: `logic.is_in_water`
+- Purpose: Checks if player is in water.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Result` (Data: Boolean)
+
+### Random Player
+
+- Type: `logic.random_player`
+- Purpose: Picks a random online player.
+- Outputs:
+  - `Player` (Data: Player)
+
+## Newly Added Action Nodes
+
+### Set Player Health
+
+- Type: `action.set_player_health`
+- Purpose: Sets a player's health.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Health` (Data: Number)
+- Outputs:
+  - `Then` (Execution)
+
+### Set Player Hunger
+
+- Type: `action.set_player_hunger`
+- Purpose: Sets a player's hunger level.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Hunger` (Data: Number)
+- Outputs:
+  - `Then` (Execution)
+
+### Set Block
+
+- Type: `action.set_block`
+- Purpose: Sets a block at a location.
+- Inputs:
+  - `In` (Execution)
+  - `Location` (Data: Location)
+  - `Material` (Data: Text)
+- Outputs:
+  - `Then` (Execution)
+
+### Break Block
+
+- Type: `action.break_block`
+- Purpose: Breaks a block at a location.
+- Inputs:
+  - `In` (Execution)
+  - `Location` (Data: Location)
+- Outputs:
+  - `Then` (Execution)
+
+### Remove Item
+
+- Type: `action.remove_item`
+- Purpose: Removes an item from player inventory.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Item` (Data: ItemStack)
+- Outputs:
+  - `Then` (Execution)
+
+### Clear Inventory
+
+- Type: `action.clear_inventory`
+- Purpose: Clears player inventory.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+- Outputs:
+  - `Then` (Execution)
+
+### Damage Player
+
+- Type: `action.damage_player`
+- Purpose: Damages a player.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Amount` (Data: Number)
+- Outputs:
+  - `Then` (Execution)
+
+### Heal Player
+
+- Type: `action.heal_player`
+- Purpose: Heals a player.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Amount` (Data: Number)
+- Outputs:
+  - `Then` (Execution)
+
+### Send Title
+
+- Type: `action.send_title`
+- Purpose: Sends title and subtitle to player.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Title` (Data: Text)
+  - `Subtitle` (Data: Text)
+- Outputs:
+  - `Then` (Execution)
+
+### Send Action Bar
+
+- Type: `action.send_actionbar`
+- Purpose: Sends action bar text to player.
+- Inputs:
+  - `In` (Execution)
+  - `Player` (Data: Player)
+  - `Text` (Data: Text)
+- Outputs:
+  - `Then` (Execution)
+
+### Set Item Name
+
+- Type: `action.set_item_name`
+- Purpose: Changes item display name.
+- Inputs:
+  - `Item` (Data: ItemStack)
+  - `Name` (Data: Text)
+- Outputs:
+  - `Item` (Data: ItemStack)
+
+### Set Item Lore
+
+- Type: `action.set_item_lore`
+- Purpose: Changes item lore text.
+- Inputs:
+  - `Item` (Data: ItemStack)
+  - `Lore` (Data: Text)
+- Outputs:
+  - `Item` (Data: ItemStack)
+
+### Enchant Item
+
+- Type: `action.enchant_item`
+- Purpose: Adds enchantment to item.
+- Inputs:
+  - `Item` (Data: ItemStack)
+  - `Enchantment` (Data: Text)
+  - `Level` (Data: Number)
+- Outputs:
+  - `Item` (Data: ItemStack)
+
+## Newly Added Data Nodes
+
+### Get Player Health
+
+- Type: `data.get_player_health`
+- Purpose: Reads current player health.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Health` (Data: Number)
+
+### Get Player Hunger
+
+- Type: `data.get_player_hunger`
+- Purpose: Reads current player hunger.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Hunger` (Data: Number)
+
+### Get Player Location
+
+- Type: `data.get_player_location`
+- Purpose: Reads player's current location.
+- Inputs:
+  - `Player` (Data: Player)
+- Outputs:
+  - `Location` (Data: Location)
+
+### Get Block Type
+
+- Type: `data.get_block_type`
+- Purpose: Reads block material at location.
+- Inputs:
+  - `Location` (Data: Location)
+- Outputs:
+  - `Material` (Data: Text)

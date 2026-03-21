@@ -104,6 +104,32 @@ public final class DefaultNodes {
         registry.register(NodeDefinition.builder("event.server_tick", "Server Tick", NodeCategory.EVENT)
             .output("Then", PortKind.EXECUTION, PortType.FLOW)
             .build());
+        registry.register(NodeDefinition.builder("event.player_shoot_bow", "Player Shoot Bow", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_eat", "Player Eat", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_toggle_sneak", "Player Toggle Sneak", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Sneaking", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("event.player_toggle_sprint", "Player Toggle Sprint", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Sprinting", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("event.weather_change", "Weather Change", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("IsStorm", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("event.time_change", "Time Change", NodeCategory.EVENT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .output("Time", PortKind.DATA, PortType.NUMBER)
+            .build());
     }
 
     private static void registerLogic(NodeRegistry registry) {
@@ -188,6 +214,74 @@ public final class DefaultNodes {
             .input("Number", PortKind.DATA, PortType.NUMBER)
             .output("Text", PortKind.DATA, PortType.TEXT)
             .build());
+        registry.register(NodeDefinition.builder("logic.set_variable", "Set Variable", NodeCategory.LOGIC)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Name", PortKind.DATA, PortType.TEXT)
+            .input("Value", PortKind.DATA, PortType.ANY)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("logic.get_variable", "Get Variable", NodeCategory.LOGIC)
+            .input("Name", PortKind.DATA, PortType.TEXT)
+            .output("Value", PortKind.DATA, PortType.ANY)
+            .build());
+        registry.register(NodeDefinition.builder("logic.set_player_variable", "Set Player Variable", NodeCategory.LOGIC)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Name", PortKind.DATA, PortType.TEXT)
+            .input("Value", PortKind.DATA, PortType.ANY)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("logic.get_player_variable", "Get Player Variable", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Name", PortKind.DATA, PortType.TEXT)
+            .output("Value", PortKind.DATA, PortType.ANY)
+            .build());
+        registry.register(NodeDefinition.builder("logic.get_distance", "Get Distance", NodeCategory.LOGIC)
+            .input("Location A", PortKind.DATA, PortType.LOCATION)
+            .input("Location B", PortKind.DATA, PortType.LOCATION)
+            .output("Distance", PortKind.DATA, PortType.NUMBER)
+            .build());
+        registry.register(NodeDefinition.builder("logic.player_has_item", "Has Item", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .output("Has", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.break", "Break Loop", NodeCategory.LOGIC)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("logic.continue", "Continue Loop", NodeCategory.LOGIC)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("logic.cooldown", "Cooldown Check", NodeCategory.LOGIC)
+            .input("Key", PortKind.DATA, PortType.TEXT)
+            .input("Time", PortKind.DATA, PortType.NUMBER)
+            .output("Ready", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.color_text", "Color Text", NodeCategory.LOGIC)
+            .input("Text", PortKind.DATA, PortType.TEXT)
+            .output("Text", PortKind.DATA, PortType.TEXT)
+            .build());
+        registry.register(NodeDefinition.builder("logic.is_sneaking", "Is Sneaking", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Result", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.is_sprinting", "Is Sprinting", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Result", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.is_on_ground", "Is On Ground", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Result", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.is_in_water", "Is In Water", NodeCategory.LOGIC)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Result", PortKind.DATA, PortType.BOOLEAN)
+            .build());
+        registry.register(NodeDefinition.builder("logic.random_player", "Random Player", NodeCategory.LOGIC)
+            .output("Player", PortKind.DATA, PortType.PLAYER)
+            .build());
     }
 
     private static void registerActions(NodeRegistry registry) {
@@ -226,6 +320,81 @@ public final class DefaultNodes {
             .input("Command", PortKind.DATA, PortType.TEXT)
             .output("Then", PortKind.EXECUTION, PortType.FLOW)
             .build());
+        registry.register(NodeDefinition.builder("action.set_player_health", "Set Player Health", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Health", PortKind.DATA, PortType.NUMBER)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.set_player_hunger", "Set Player Hunger", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Hunger", PortKind.DATA, PortType.NUMBER)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.set_block", "Set Block", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Location", PortKind.DATA, PortType.LOCATION)
+            .input("Material", PortKind.DATA, PortType.TEXT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.break_block", "Break Block", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Location", PortKind.DATA, PortType.LOCATION)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.remove_item", "Remove Item", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.clear_inventory", "Clear Inventory", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.damage_player", "Damage Player", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Amount", PortKind.DATA, PortType.NUMBER)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.heal_player", "Heal Player", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Amount", PortKind.DATA, PortType.NUMBER)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.send_title", "Send Title", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Title", PortKind.DATA, PortType.TEXT)
+            .input("Subtitle", PortKind.DATA, PortType.TEXT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.send_actionbar", "Send Action Bar", NodeCategory.ACTION)
+            .input("In", PortKind.EXECUTION, PortType.FLOW)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .input("Text", PortKind.DATA, PortType.TEXT)
+            .output("Then", PortKind.EXECUTION, PortType.FLOW)
+            .build());
+        registry.register(NodeDefinition.builder("action.set_item_name", "Set Item Name", NodeCategory.ACTION)
+            .input("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .input("Name", PortKind.DATA, PortType.TEXT)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
+        registry.register(NodeDefinition.builder("action.set_item_lore", "Set Item Lore", NodeCategory.ACTION)
+            .input("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .input("Lore", PortKind.DATA, PortType.TEXT)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
+        registry.register(NodeDefinition.builder("action.enchant_item", "Enchant Item", NodeCategory.ACTION)
+            .input("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .input("Enchantment", PortKind.DATA, PortType.TEXT)
+            .input("Level", PortKind.DATA, PortType.NUMBER)
+            .output("Item", PortKind.DATA, PortType.ITEMSTACK)
+            .build());
     }
 
     private static void registerData(NodeRegistry registry) {
@@ -243,6 +412,22 @@ public final class DefaultNodes {
             .build());
         registry.register(NodeDefinition.builder("data.text", "Text", NodeCategory.DATA)
             .output("Text", PortKind.DATA, PortType.TEXT)
+            .build());
+        registry.register(NodeDefinition.builder("data.get_player_health", "Get Player Health", NodeCategory.DATA)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Health", PortKind.DATA, PortType.NUMBER)
+            .build());
+        registry.register(NodeDefinition.builder("data.get_player_hunger", "Get Player Hunger", NodeCategory.DATA)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Hunger", PortKind.DATA, PortType.NUMBER)
+            .build());
+        registry.register(NodeDefinition.builder("data.get_player_location", "Get Player Location", NodeCategory.DATA)
+            .input("Player", PortKind.DATA, PortType.PLAYER)
+            .output("Location", PortKind.DATA, PortType.LOCATION)
+            .build());
+        registry.register(NodeDefinition.builder("data.get_block_type", "Get Block Type", NodeCategory.DATA)
+            .input("Location", PortKind.DATA, PortType.LOCATION)
+            .output("Material", PortKind.DATA, PortType.TEXT)
             .build());
     }
 }
